@@ -69,6 +69,9 @@ h2{font-family:var(--verse);font-size:20px;margin:4px 0 12px;text-wrap:balance}
 .hint{cursor:pointer;border-radius:3px}
 .hint .rest{color:var(--line);letter-spacing:.05em}
 .hint.open .rest{color:var(--gold)}
+.blank.cur,.hint.cur{outline:2px solid var(--accent);outline-offset:2px}
+.stepper{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stepper .btn{padding:12px 6px;font-weight:600}
 .write{font-family:var(--verse);font-size:17px;line-height:1.8;width:100%;min-height:150px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);resize:vertical}
 .result{font-family:var(--verse);font-size:18px;line-height:2;word-break:keep-all}
 .result .ok{color:var(--accent)}
@@ -239,6 +242,7 @@ function render(){
   else if(route.v==="exam")v.innerHTML=examHTML();
   else if(route.v==="result")v.innerHTML=resultHTML();
   window.scrollTo(0,0);
+  markCur();
 }
 function homeHTML(){
   const all=BOOKS.reduce((n,b)=>n+b.v.length,0);
@@ -318,7 +322,7 @@ function cardHTML(no,i){
     <div class="meta"><span>${ROMAN[no]}-${i+1} · ${b.name}</span><span>${i+1} / ${b.v.length}</span></div>
     <div><div class="ref">${esc(x[1])}</div><div class="title">${esc(x[0])}</div></div>
     ${verseBody(x[2],m,key)}
-    ${m==="blank"||m==="first"?`<div class="tools"><button class="btn" data-act="all">모두 보기</button>${m==="blank"?`<button class="btn" data-act="shuffle">빈칸 바꾸기</button>`:""}</div>`:""}
+    ${m==="blank"||m==="first"?`<div class="stepper"><button class="btn" data-act="stepback">‹ 뒤로</button><button class="btn primary" data-act="stepnext">앞으로 ›</button></div><div class="tools"><button class="btn" data-act="all">모두 보기</button><button class="btn" data-act="hideall">모두 가리기</button>${m==="blank"?`<button class="btn" data-act="shuffle">빈칸 바꾸기</button>`:""}</div>`:""}
   </article>
   <div class="nav">
     <button class="btn" data-act="prev" ${i===0?"disabled style='opacity:.4'":""}>‹ 이전</button>
@@ -411,8 +415,8 @@ document.addEventListener("click",e=>{
   if(t.dataset.pickall){const no=+t.dataset.pickall,ks=BOOKS[no-1].v.map((_,i)=>no+"-"+i),all=ks.every(k=>pick.has(k));ks.forEach(k=>all?pick.delete(k):pick.add(k));syncPick();return}
   if(t.dataset.verse){S.mode="card";saveLocal();route={v:"card",b:route.b,i:+t.dataset.verse};revealed={};render();return}
   if(t.dataset.mode){S.mode=t.dataset.mode;saveLocal();revealed={};render();return}
-  if(t.classList.contains("blank")){t.classList.toggle("open");return}
-  if(t.classList.contains("hint")){openHint(t,!t.classList.contains("open"));return}
+  if(t.classList.contains("blank")){t.classList.toggle("open");markCur();return}
+  if(t.classList.contains("hint")){openHint(t,!t.classList.contains("open"));markCur();return}
   const a=t.dataset.act;if(!a)return;
   const key=route.v==="card"?vid(route.b,route.i):null;
   if(a==="pickclear"){pick.clear();syncPick();return}
@@ -427,13 +431,19 @@ document.addEventListener("click",e=>{
   if(a==="show"){revealed[key]=true;render()}
   else if(a==="grade"){const t=(drafts[key]||"").trim();if(!t){$("#writeInput").focus();return}graded[key]=grade(BOOKS[route.b-1].v[route.i][2],t);render()}
   else if(a==="rewrite"){delete graded[key];drafts[key]="";render();setTimeout(()=>{const w=$("#writeInput");if(w)w.focus()},30)}
-  else if(a==="all"){document.querySelectorAll(".blank").forEach(x=>x.classList.add("open"));document.querySelectorAll(".hint").forEach(x=>openHint(x,true))}
+  else if(a==="all"){document.querySelectorAll(".blank").forEach(x=>x.classList.add("open"));document.querySelectorAll(".hint").forEach(x=>openHint(x,true));markCur()}
+  else if(a==="hideall"){document.querySelectorAll(".blank").forEach(x=>x.classList.remove("open"));document.querySelectorAll(".hint").forEach(x=>openHint(x,false));markCur()}
+  else if(a==="stepnext"){const nx=stepItems().find(x=>!x.classList.contains("open"));if(nx)setOpen(nx,true);markCur()}
+  else if(a==="stepback"){const op=stepItems().filter(x=>x.classList.contains("open"));if(op.length)setOpen(op[op.length-1],false);markCur()}
   else if(a==="shuffle"){shuffle++;render()}
   else if(a==="prev"&&route.i>0){route.i--;revealed={};render()}
   else if(a==="next"&&route.i<BOOKS[route.b-1].v.length-1){route.i++;revealed={};render()}
   else if(a==="done"){if(S.done[key])delete S.done[key];else S.done[key]=true;saveLocal();render();pushProgress()}
 });
 function openHint(el,open){el.classList.toggle("open",open);el.querySelectorAll("[data-c]").forEach(c=>c.textContent=open?c.dataset.c:"○")}
+function stepItems(){return [...document.querySelectorAll(".verse .blank,.verse .hint")]}
+function setOpen(el,open){if(el.classList.contains("hint"))openHint(el,open);else el.classList.toggle("open",open)}
+function markCur(){const it=stepItems();it.forEach(x=>x.classList.remove("cur"));const nx=it.find(x=>!x.classList.contains("open"));if(nx)nx.classList.add("cur")}
 $("#tabHome").onclick=()=>{route={v:"home"};render()};
 $("#tabTest").onclick=()=>{route={v:"test"};render()};
 
