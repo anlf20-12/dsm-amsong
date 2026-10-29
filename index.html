@@ -31,7 +31,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .wrap{max-width:640px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 96px}
 header.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:8px 16px}
-.brand{display:flex;flex-direction:column}
+.brand{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:0}
 .brand small{font-size:11px;letter-spacing:.12em;color:var(--muted)}
 .brand b{font-family:var(--verse);font-size:22px;font-weight:700}
 .chip{padding:6px 12px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:600;font-size:13px;white-space:nowrap}
@@ -124,7 +124,7 @@ details.sub summary{cursor:pointer;font-size:14px;color:var(--muted);padding:4px
 </head><body>
 <div class="wrap">
   <header class="top">
-    <div class="brand"><small>DSM 제자훈련</small><b>말씀 암송</b></div>
+    <button class="brand" data-go="home" aria-label="목차로 가기"><small>DSM 제자훈련</small><b>말씀 암송</b></button>
   </header>
   <main id="view"></main>
 </div>
@@ -409,7 +409,7 @@ document.addEventListener("click",e=>{
   if(t.dataset.exam){startExam(t.dataset.exam);return}
   if(t.dataset.pick){const k=t.dataset.pick;pick.has(k)?pick.delete(k):pick.add(k);syncPick();return}
   if(t.dataset.pickall){const no=+t.dataset.pickall,ks=BOOKS[no-1].v.map((_,i)=>no+"-"+i),all=ks.every(k=>pick.has(k));ks.forEach(k=>all?pick.delete(k):pick.add(k));syncPick();return}
-  if(t.dataset.verse){route={v:"card",b:route.b,i:+t.dataset.verse};revealed={};render();return}
+  if(t.dataset.verse){S.mode="card";saveLocal();route={v:"card",b:route.b,i:+t.dataset.verse};revealed={};render();return}
   if(t.dataset.mode){S.mode=t.dataset.mode;saveLocal();revealed={};render();return}
   if(t.classList.contains("blank")){t.classList.toggle("open");return}
   if(t.classList.contains("hint")){openHint(t,!t.classList.contains("open"));return}
