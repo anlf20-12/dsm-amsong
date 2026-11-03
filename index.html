@@ -34,6 +34,8 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:12p
 .brand{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:0}
 .brand small{font-size:11px;letter-spacing:.12em;color:var(--muted)}
 .brand b{font-family:var(--verse);font-size:22px;font-weight:700}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(70px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;z-index:30;max-width:calc(100% - 32px)}
+[hidden]{display:none!important}
 .chip{padding:6px 12px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:600;font-size:13px;white-space:nowrap}
 h2{font-family:var(--verse);font-size:20px;margin:4px 0 12px;text-wrap:balance}
 .books{display:grid;gap:10px}
@@ -131,6 +133,7 @@ details.sub summary{cursor:pointer;font-size:14px;color:var(--muted);padding:4px
   </header>
   <main id="view"></main>
 </div>
+<div class="toast" id="toast" hidden></div>
 <nav class="tabbar">
   <button id="tabHome" aria-current="page">암송</button>
   <button id="tabTest">시험</button>
@@ -450,6 +453,26 @@ $("#tabTest").onclick=()=>{route={v:"test"};render()};
 function pushProgress(){}
 
 render();
+/* ---------- 뒤로가기: 이전 화면으로, 목차에서는 두 번 누르면 종료 ---------- */
+let toastT;function toast(m){const t=$("#toast");t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2000)}
+function backTarget(){
+  if(route.v==="card")return {v:"book",b:route.b};
+  if(route.v==="book"||route.v==="test")return {v:"home"};
+  if(route.v==="exam"||route.v==="result")return {v:"test"};
+  return null;
+}
+let backArmed=false,exitT=null;
+function armBack(){if(backArmed)return;backArmed=true;try{history.pushState({g:1},"")}catch(e){}}
+addEventListener("popstate",e=>{
+  if(e.state&&e.state.g===1)return;
+  clearTimeout(exitT);backArmed=false;
+  const p=backTarget();
+  if(p){if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();route=p;render();armBack();return}
+  toast("한 번 더 누르면 종료돼요");
+  exitT=setTimeout(armBack,2000);
+});
+try{history.replaceState({g:0},"")}catch(e){}
+armBack();
 </script>
 <script>if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}</script>
 </body></html>
