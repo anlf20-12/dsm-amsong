@@ -455,24 +455,33 @@ function pushProgress(){}
 render();
 /* ---------- 뒤로가기: 이전 화면으로, 목차에서는 두 번 누르면 종료 ---------- */
 let toastT;function toast(m){const t=$("#toast");t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2000)}
-function backTarget(){
-  if(route.v==="card")return {v:"book",b:route.b};
-  if(route.v==="book"||route.v==="test")return {v:"home"};
-  if(route.v==="exam"||route.v==="result")return {v:"test"};
-  return null;
+const NAV={push:s=>{try{history.pushState(s,"")}catch(e){}},replace:s=>{try{history.replaceState(s,"")}catch(e){}},go:n=>{try{history.go(n)}catch(e){}}};
+const SHEET_CLOSE=()=>{};
+const navKey=r=>(r.v==="exam"||r.v==="result")?"exam":r.v+":"+(r.b||"")+(r.v==="write"?":"+r.c:"");
+let navD=0,navS=["home:"],navPop=false;
+function navActive(){const u=navigator.userActivation;return u?u.isActive:true}
+function syncNav(){
+  if(navPop||!navActive())return;
+  const k=navKey(route);
+  if(navD===0){navD=1;navS=["home:","home:"];NAV.push({d:1,r:{v:"home"}});if(k==="home:")return}
+  if(k===navS[navD])return;
+  const at=navS.lastIndexOf(k,navD-1);
+  if(at>=1){NAV.go(at-navD);return}
+  navD++;navS.length=navD;navS[navD]=k;NAV.push({d:navD,r:Object.assign({},route)});
 }
-let backArmed=false,exitT=null;
-function armBack(){if(backArmed)return;backArmed=true;try{history.pushState({g:1},"")}catch(e){}}
-addEventListener("popstate",e=>{
-  if(e.state&&e.state.g===1)return;
-  clearTimeout(exitT);backArmed=false;
-  const p=backTarget();
-  if(p){if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();route=p;render();armBack();return}
-  toast("한 번 더 누르면 종료돼요");
-  exitT=setTimeout(armBack,2000);
-});
-try{history.replaceState({g:0},"")}catch(e){}
-armBack();
+function navBack(st){
+  st=st||{d:0};
+  SHEET_CLOSE();
+  navD=st.d||0;navS.length=navD+1;
+  navPop=true;
+  if(navD===0){if(route.v!=="home"){route={v:"home"};render()}navS[0]="home:";toast("한 번 더 누르면 종료돼요")}
+  else{route=Object.assign({},st.r);navS[navD]=navKey(route);if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();render();window.scrollTo(0,0)}
+  navPop=false;
+}
+const _render0=render;render=function(){_render0();syncNav()};
+document.addEventListener("click",()=>{if(navD===0)setTimeout(syncNav,0)},true);
+NAV.replace({d:0,r:{v:"home"}});
+addEventListener("popstate",e=>navBack(e.state));
 </script>
 <script>if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}</script>
 </body></html>
