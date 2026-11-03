@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DSM 필사</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<meta name="theme-color" content="#2f4a8a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DSM 필사">
+<style>
+:root{--bg:#f4f6fa;--ink:#1b2333;--muted:#5d6779;--accent:#2f4a8a}
+@media (prefers-color-scheme:dark){:root{--bg:#141a24;--ink:#e7ebf2;--muted:#9aa4b5;--accent:#8fa8e6}}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+#app{position:fixed;inset:0;width:100%;height:100%;border:0;display:block;background:var(--bg)}
+#cover{position:fixed;inset:0;display:grid;place-items:center;text-align:center;padding:24px;background:var(--bg);transition:opacity .3s}
+#cover.hide{opacity:0;pointer-events:none}
+#cover img{width:84px;height:84px;border-radius:20px}
+#cover p{margin:14px 0 0;color:var(--muted);font-size:14px}
+#cover button{margin-top:16px;font:inherit;padding:10px 18px;border-radius:12px;border:1px solid var(--accent);background:none;color:var(--accent)}
+[hidden]{display:none!important}
+</style>
+</head><body>
+<iframe id="app" title="DSM 필사" allow="clipboard-write"></iframe>
+<div id="cover"><div><img src="icon-192.png" alt=""><p id="msg">필사 앱을 여는 중이에요…</p><button id="retry" hidden>다시 열기</button></div></div>
+<script>
+const APP="https://script.google.com/macros/s/AKfycbyjhmR4eSD0qWBRjzoxobnp1OcuwL1_Ufu4gSwKcSrpUF1gE0wRxvG6y0IA5oq56g-sAw/exec";
+const f=document.getElementById("app"),cover=document.getElementById("cover"),msg=document.getElementById("msg"),retry=document.getElementById("retry");
+function open(){
+  if(!navigator.onLine){msg.textContent="인터넷에 연결되어 있지 않아요. 필사는 조원들과 함께 기록해서 인터넷이 필요해요.";retry.hidden=false;return}
+  msg.textContent="필사 앱을 여는 중이에요…";retry.hidden=true;cover.classList.remove("hide");
+  f.src=APP;
+}
+f.addEventListener("load",()=>{if(f.src)setTimeout(()=>cover.classList.add("hide"),400)});
+retry.onclick=open;
+addEventListener("online",()=>{if(!f.src)open()});
+open();
+if("serviceWorker" in navigator){addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
+</script>
+</body></html>
